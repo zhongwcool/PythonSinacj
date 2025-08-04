@@ -252,75 +252,7 @@ class ComprehensiveAPITester:
         
         return results
     
-    def test_netease_realtime_api(self, stock_code: str, stock_name: str) -> Dict:
-        """测试网易财经实时数据API"""
-        print(f"🔍 测试网易财经实时API: {stock_name}({stock_code})")
-        
-        results = {
-            'api_name': '网易财经实时API',
-            'stock_code': stock_code,
-            'stock_name': stock_name,
-            'success_count': 0,
-            'fail_count': 0,
-            'response_times': [],
-            'data_quality_scores': [],
-            'errors': [],
-            'data_samples': []
-        }
-        
-        # 进行多次测试
-        for i in range(5):
-            try:
-                start_time = time.time()
-                
-                # 网易财经实时数据API
-                url = f"http://api.money.126.net/data/feed/{stock_code}/money.api"
-                response = requests.get(url, headers=self.headers, timeout=10)
-                
-                response_time = time.time() - start_time
-                results['response_times'].append(response_time)
-                
-                if response.status_code == 200:
-                    try:
-                        data = response.json()
-                        if data and stock_code in data:
-                            stock_data = data[stock_code]
-                            
-                            # 数据质量检查
-                            quality_score = self._check_netease_realtime_quality(stock_data)
-                            results['data_quality_scores'].append(quality_score)
-                            
-                            # 保存数据样本
-                            if i == 0:
-                                results['data_samples'].append({
-                                    'current_price': stock_data.get('price', 0),
-                                    'stock_name': stock_data.get('name', ''),
-                                    'change_percent': stock_data.get('percent', 0)
-                                })
-                            
-                            results['success_count'] += 1
-                            print(f"  ✅ 第{i+1}次测试成功 - 响应时间: {response_time:.3f}s - 质量评分: {quality_score:.2f}")
-                        else:
-                            results['fail_count'] += 1
-                            results['errors'].append(f"第{i+1}次: 数据格式错误")
-                            print(f"  ❌ 第{i+1}次测试失败 - 数据格式错误")
-                    except json.JSONDecodeError:
-                        results['fail_count'] += 1
-                        results['errors'].append(f"第{i+1}次: JSON解析失败")
-                        print(f"  ❌ 第{i+1}次测试失败 - JSON解析失败")
-                else:
-                    results['fail_count'] += 1
-                    results['errors'].append(f"第{i+1}次: HTTP {response.status_code}")
-                    print(f"  ❌ 第{i+1}次测试失败 - HTTP {response.status_code}")
-                    
-            except Exception as e:
-                results['fail_count'] += 1
-                results['errors'].append(f"第{i+1}次: {str(e)}")
-                print(f"  ❌ 第{i+1}次测试异常: {e}")
-            
-            time.sleep(0.5)
-        
-        return results
+
     
     def _check_sina_realtime_quality(self, stock_data: List[str]) -> float:
         """检查新浪实时数据质量"""
@@ -402,29 +334,7 @@ class ComprehensiveAPITester:
         
         return score / total_checks if total_checks > 0 else 0.0
     
-    def _check_netease_realtime_quality(self, stock_data: Dict) -> float:
-        """检查网易实时数据质量"""
-        score = 0.0
-        total_checks = 0
-        
-        # 检查必要字段
-        required_fields = ['price', 'name', 'percent', 'volume']
-        for field in required_fields:
-            total_checks += 1
-            if field in stock_data and stock_data[field] is not None:
-                score += 1
-        
-        # 检查价格合理性
-        if 'price' in stock_data and stock_data['price'] is not None:
-            try:
-                price = float(stock_data['price'])
-                if 0 < price < 10000:
-                    score += 1
-                total_checks += 1
-            except (ValueError, TypeError):
-                pass
-        
-        return score / total_checks if total_checks > 0 else 0.0
+
     
     def run_comprehensive_test(self):
         """运行全面的API可靠性测试"""
@@ -437,8 +347,7 @@ class ComprehensiveAPITester:
         apis_to_test = [
             ('sina_realtime', self.test_sina_realtime_api),
             ('tencent_realtime', self.test_tencent_realtime_api),
-            ('eastmoney_minute', self.test_eastmoney_minute_api),
-            ('netease_realtime', self.test_netease_realtime_api)
+            ('eastmoney_minute', self.test_eastmoney_minute_api)
         ]
         
         for api_name, test_func in apis_to_test:

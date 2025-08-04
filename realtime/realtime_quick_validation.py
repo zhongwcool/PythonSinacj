@@ -3,7 +3,7 @@
 """
 快速数据源验证工具
 快速验证多个数据源是否有效获取开盘到现在的实时数据
-覆盖所有主要数据源：新浪财经、腾讯财经、东方财富、网易财经
+覆盖所有主要数据源：新浪财经、腾讯财经、东方财富
 """
 
 import requests
@@ -56,11 +56,6 @@ class QuickDataValidation:
                 'name': '东方财富',
                 'test_func': self._test_eastmoney_minute,
                 'description': '分钟级数据'
-            },
-            {
-                'name': '网易财经',
-                'test_func': self._test_netease_realtime,
-                'description': '实时价格数据'
             }
         ]
     
@@ -240,61 +235,7 @@ class QuickDataValidation:
                 'error': str(e)
             }
     
-    def _test_netease_realtime(self, stock_code: str, stock_name: str) -> dict:
-        """测试网易财经实时数据"""
-        try:
-            start_time = time.time()
-            
-            # 网易财经特定的请求头
-            netease_headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'application/json, text/plain, */*',
-                'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
-                'Accept-Encoding': 'gzip, deflate, br',
-                'Connection': 'keep-alive',
-                'Referer': 'http://money.163.com/',
-                'Host': 'api.money.126.net',
-                'Origin': 'http://money.163.com'
-            }
-            
-            # 网易财经实时数据API
-            url = f"http://api.money.126.net/data/feed/{stock_code}"
-            response = self.session.get(url, headers=netease_headers, timeout=15)
-            response_time = time.time() - start_time
-            
-            if response.status_code == 200:
-                try:
-                    data = response.json()
-                    if stock_code in data:
-                        stock_info = data[stock_code]
-                        current_price = stock_info.get('price', 0)
-                        volume = stock_info.get('volume', 0)
-                        update_time = stock_info.get('time', '')
-                        
-                        return {
-                            'status': 'success',
-                            'response_time': response_time,
-                            'data': {
-                                '股票名称': stock_info.get('name', stock_name),
-                                '当前价格': current_price,
-                                '成交量': volume,
-                                '更新时间': update_time
-                            }
-                        }
-                except json.JSONDecodeError:
-                    pass
-            
-            return {
-                'status': 'failed',
-                'response_time': response_time,
-                'error': f'HTTP {response.status_code} 或数据格式错误'
-            }
-            
-        except Exception as e:
-            return {
-                'status': 'error',
-                'error': str(e)
-            }
+
     
     def validate_data_source(self, stock_code: str, stock_name: str) -> dict:
         """验证单个股票的所有数据源"""
