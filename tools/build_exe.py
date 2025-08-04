@@ -37,7 +37,7 @@ def clean_build_dirs():
     """清理之前的构建目录"""
     print("\n🧹 清理构建目录...")
     
-    dirs_to_clean = ["build", "dist", "__pycache__"]
+    dirs_to_clean = ["publish", "dist", "__pycache__"]
     files_to_clean = ["*.spec"]
     
     for dir_name in dirs_to_clean:

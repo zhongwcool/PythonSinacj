@@ -5,10 +5,13 @@
 分别测试新浪财经、东方财富、Yahoo Finance的可靠性
 """
 
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'core'))
 from kline_data_fetcher import KlineDataFetcher
 import time
 import datetime
-import pandas as pd # Added missing import for pandas
+import pandas as pd
 
 def test_single_data_source(fetcher, data_source_name, data_source_func, stock_codes, days=30):
     """测试单个数据源的可靠性"""
@@ -24,12 +27,7 @@ def test_single_data_source(fetcher, data_source_name, data_source_func, stock_c
             start_time = time.time()
             
             # 调用对应的数据源函数
-            if data_source_name == "新浪财经":
-                df = data_source_func(stock_code, days)
-            elif data_source_name == "东方财富":
-                df = data_source_func(stock_code, days)
-            elif data_source_name == "Yahoo Finance":
-                df = data_source_func(stock_code, days)
+            df = data_source_func(stock_code, days)
             
             end_time = time.time()
             response_time = (end_time - start_time) * 1000  # 转换为毫秒

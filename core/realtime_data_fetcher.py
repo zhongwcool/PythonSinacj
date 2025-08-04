@@ -175,12 +175,12 @@ class RealtimeDataFetcher:
             print(f"获取东方财富分钟数据失败: {e}")
             return None
     
-    def get_realtime_data(self, stock_code: str, data_type: str = 'realtime') -> Optional[Dict]:
+    def get_realtime_data(self, stock_code: str, data_type: str = 'realtime-test') -> Optional[Dict]:
         """
         获取实时数据
-        data_type: 'realtime' - 实时价格, 'minute' - 分钟数据
+        data_type: 'realtime-test' - 实时价格, 'minute' - 分钟数据
         """
-        if data_type == 'realtime':
+        if data_type == 'realtime-test':
             return self.get_sina_realtime_data(stock_code)
         else:
             print("不支持的数据类型")
@@ -300,7 +300,7 @@ def main():
     
     # 1. 获取实时数据
     print("🚀 获取实时数据...")
-    realtime_data = fetcher.get_realtime_data(stock_code, 'realtime')
+    realtime_data = fetcher.get_realtime_data(stock_code, 'realtime-test')
     
     if realtime_data:
         fetcher.print_realtime_summary(realtime_data)
