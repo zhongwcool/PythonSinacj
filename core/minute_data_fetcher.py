@@ -5,13 +5,15 @@
 支持多个数据源获取分钟级K线数据
 """
 
-import requests
-import pandas as pd
-import time
 import datetime
 import json
 import os
-from typing import List, Dict, Optional
+import time
+from typing import Optional
+
+import pandas as pd
+import requests
+
 
 class MinuteDataFetcher:
     def __init__(self):
@@ -213,15 +215,53 @@ class MinuteDataFetcher:
     
     def save_to_csv(self, df: pd.DataFrame, stock_code: str, period: int, filename: str = None):
         """保存数据到CSV文件"""
+        # 获取调用脚本所在目录的outputs子目录
+        import inspect
+        caller_frame = inspect.currentframe().f_back
+        if caller_frame:
+            caller_file = caller_frame.f_globals.get('__file__')
+            if caller_file:
+                script_dir = os.path.dirname(os.path.abspath(caller_file))
+                output_dir = os.path.join(script_dir, "outputs")
+            else:
+                # 如果无法获取调用者文件路径，则使用当前工作目录
+                output_dir = os.path.join(os.getcwd(), "outputs")
+        else:
+            # 如果无法获取调用者信息，则使用当前工作目录
+            output_dir = os.path.join(os.getcwd(), "outputs")
+
+        # 确保outputs目录存在
+        os.makedirs(output_dir, exist_ok=True)
+        
         if filename is None:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"{stock_code}_{period}min_data_{timestamp}.csv"
-        
-        df.to_csv(filename, index=False, encoding='utf-8-sig')
-        print(f"✅ 数据已保存到: {filename}")
+
+        # 将文件保存到outputs目录
+        filepath = os.path.join(output_dir, filename)
+        df.to_csv(filepath, index=False, encoding='utf-8-sig')
+        print(f"✅ 数据已保存到: {filepath}")
     
     def save_to_json(self, df: pd.DataFrame, stock_code: str, period: int, filename: str = None):
         """保存数据到JSON文件"""
+        # 获取调用脚本所在目录的outputs子目录
+        import inspect
+        caller_frame = inspect.currentframe().f_back
+        if caller_frame:
+            caller_file = caller_frame.f_globals.get('__file__')
+            if caller_file:
+                script_dir = os.path.dirname(os.path.abspath(caller_file))
+                output_dir = os.path.join(script_dir, "outputs")
+            else:
+                # 如果无法获取调用者文件路径，则使用当前工作目录
+                output_dir = os.path.join(os.getcwd(), "outputs")
+        else:
+            # 如果无法获取调用者信息，则使用当前工作目录
+            output_dir = os.path.join(os.getcwd(), "outputs")
+
+        # 确保outputs目录存在
+        os.makedirs(output_dir, exist_ok=True)
+        
         if filename is None:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"{stock_code}_{period}min_data_{timestamp}.json"
@@ -237,11 +277,13 @@ class MinuteDataFetcher:
             '获取时间': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             '数据': df_copy.to_dict('records')
         }
-        
-        with open(filename, 'w', encoding='utf-8') as f:
+
+        # 将文件保存到outputs目录
+        filepath = os.path.join(output_dir, filename)
+        with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
-        
-        print(f"✅ 数据已保存到: {filename}")
+
+        print(f"✅ 数据已保存到: {filepath}")
     
     def print_summary(self, df: pd.DataFrame, stock_code: str, period: int):
         """打印数据摘要"""
