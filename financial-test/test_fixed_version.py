@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-测试所有财务数据源
-对比不同数据源的数据质量和可用性
+测试修复版本的财务数据获取器
+对比修复前后的数据质量
 """
 
 import os
@@ -15,16 +15,14 @@ import time
 import json
 
 
-def test_all_sources():
-    """测试所有数据源"""
-
+def test_fixed_version():
+    """测试修复版本的数据获取器"""
+    
     # 测试股票列表
     test_stocks = [
-        "sz000498",  # 山东路桥
+        "sz000002",  # 万科A
         "sh600000",  # 浦发银行
         "sz000001",  # 平安银行
-        "sh600036",  # 招商银行
-        "sz000002"  # 万科A
     ]
 
     # 数据源列表
@@ -36,7 +34,7 @@ def test_all_sources():
 
     fetcher = FinancialDataFetcher()
 
-    print("🚀 开始测试所有财务数据源...")
+    print("🚀 开始测试修复版本的财务数据获取器...")
     print("=" * 80)
 
     for stock_code in test_stocks:
@@ -50,7 +48,16 @@ def test_all_sources():
 
             try:
                 start_time = time.time()
-                data = fetcher.get_financial_data(stock_code, data_source=source_code)
+
+                if source_code == 'eastmoney':
+                    data = fetcher.get_eastmoney_financial_data_fixed(stock_code)
+                elif source_code == 'sina':
+                    data = fetcher.get_sina_financial_data_fixed(stock_code)
+                elif source_code == 'tencent':
+                    data = fetcher.get_tencent_financial_data_fixed(stock_code)
+                else:
+                    data = None
+                
                 end_time = time.time()
 
                 if data:
@@ -95,7 +102,7 @@ def test_all_sources():
             time.sleep(1)  # 避免请求过于频繁
 
         # 保存结果
-        filename = f"{stock_code}_all_sources_test_{time.strftime('%Y%m%d_%H%M%S')}.json"
+        filename = f"{stock_code}_fixed_test_{time.strftime('%Y%m%d_%H%M%S')}.json"
         with open(filename, 'w', encoding='utf-8') as f:
             json.dump(results, f, ensure_ascii=False, indent=2)
 
@@ -114,7 +121,9 @@ def test_all_sources():
             for source_name, data in results.items():
                 if data and data.get('当前价格') != 'N/A':
                     try:
-                        prices[source_name] = float(str(data['当前价格']).replace('元', ''))
+                        price = data['当前价格']
+                        if isinstance(price, (int, float)):
+                            prices[source_name] = price
                     except:
                         pass
 
@@ -131,13 +140,18 @@ def test_all_sources():
                 price_diff_pct = (price_diff / min_price) * 100 if min_price > 0 else 0
 
                 print(f"  价格差异: {price_diff:.2f}元 ({price_diff_pct:.2f}%)")
+
+                if price_diff_pct < 5:  # 价格差异小于5%认为是合理的
+                    print("  ✅ 价格数据一致性良好")
+                else:
+                    print("  ⚠️ 价格数据存在较大差异，需要进一步验证")
         else:
             print("❌ 只有一个数据源成功获取数据，无法进行对比")
 
         print("\n" + "=" * 80)
 
 
-def test_single_stock_detailed(stock_code="sz000498"):
+def test_single_stock_detailed(stock_code="sz000002"):
     """详细测试单个股票的所有数据源"""
 
     print(f"🔍 详细测试股票: {stock_code}")
@@ -145,16 +159,16 @@ def test_single_stock_detailed(stock_code="sz000498"):
 
     fetcher = FinancialDataFetcher()
 
-    # 测试东方财富数据源（最全面）
+    # 测试东方财富数据源
     print("\n📊 东方财富数据源详细数据:")
     print("-" * 60)
 
-    eastmoney_data = fetcher.get_financial_data(stock_code, data_source='eastmoney')
+    eastmoney_data = fetcher.get_eastmoney_financial_data_fixed(stock_code)
     if eastmoney_data:
         fetcher.print_financial_summary(eastmoney_data)
 
         # 保存详细数据
-        filename = f"{stock_code}_eastmoney_detailed_{time.strftime('%Y%m%d_%H%M%S')}.json"
+        filename = f"{stock_code}_eastmoney_fixed_{time.strftime('%Y%m%d_%H%M%S')}.json"
         fetcher.save_to_json(eastmoney_data, stock_code, filename)
     else:
         print("❌ 东方财富数据获取失败")
@@ -163,12 +177,12 @@ def test_single_stock_detailed(stock_code="sz000498"):
     print("\n📊 腾讯财经数据源详细数据:")
     print("-" * 60)
 
-    tencent_data = fetcher.get_financial_data(stock_code, data_source='tencent')
+    tencent_data = fetcher.get_tencent_financial_data_fixed(stock_code)
     if tencent_data:
         fetcher.print_financial_summary(tencent_data)
 
         # 保存详细数据
-        filename = f"{stock_code}_tencent_detailed_{time.strftime('%Y%m%d_%H%M%S')}.json"
+        filename = f"{stock_code}_tencent_fixed_{time.strftime('%Y%m%d_%H%M%S')}.json"
         fetcher.save_to_json(tencent_data, stock_code, filename)
     else:
         print("❌ 腾讯财经数据获取失败")
@@ -177,12 +191,12 @@ def test_single_stock_detailed(stock_code="sz000498"):
     print("\n📊 新浪财经数据源详细数据:")
     print("-" * 60)
 
-    sina_data = fetcher.get_financial_data(stock_code, data_source='sina')
+    sina_data = fetcher.get_sina_financial_data_fixed(stock_code)
     if sina_data:
         fetcher.print_financial_summary(sina_data)
 
         # 保存详细数据
-        filename = f"{stock_code}_sina_detailed_{time.strftime('%Y%m%d_%H%M%S')}.json"
+        filename = f"{stock_code}_sina_fixed_{time.strftime('%Y%m%d_%H%M%S')}.json"
         fetcher.save_to_json(sina_data, stock_code, filename)
     else:
         print("❌ 新浪财经数据获取失败")
@@ -190,7 +204,7 @@ def test_single_stock_detailed(stock_code="sz000498"):
 
 def main():
     """主函数"""
-    print("🎯 财务数据源测试工具")
+    print("🎯 修复版本财务数据获取器测试工具")
     print("=" * 80)
 
     while True:
@@ -202,11 +216,11 @@ def main():
         choice = input("\n请输入选择 (1-3): ").strip()
 
         if choice == '1':
-            test_all_sources()
+            test_fixed_version()
         elif choice == '2':
-            stock_code = input("请输入股票代码 (默认: sz000498): ").strip()
+            stock_code = input("请输入股票代码 (默认: sz000002): ").strip()
             if not stock_code:
-                stock_code = "sz000498"
+                stock_code = "sz000002"
             test_single_stock_detailed(stock_code)
         elif choice == '3':
             print("👋 再见！")
